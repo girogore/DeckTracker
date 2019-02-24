@@ -1,0 +1,11 @@
+{
+  "modid": "DeckTracker",
+  "name": "DeckTracker",
+  "author_list": ["Girogore"],
+  "description": "Allows viewing of cards in players draw deck",
+  "credits": "t-larson: Original creator of BaseMod",
+  "version": "0.1.0",
+  "sts_version": "12-20-2018",
+  "mts_version": "3.6.0",
+  "dependencies": ["basemod"]
+}
