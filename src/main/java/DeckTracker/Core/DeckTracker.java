@@ -24,12 +24,13 @@ import java.util.TreeMap;
 
 @SpireInitializer
 public class DeckTracker implements PostDrawSubscriber, StartGameSubscriber, OnStartBattleSubscriber, OnCardUseSubscriber, PostBattleSubscriber {
-    private TreeMap<AbstractCard, Integer> deckList;
     public static final Logger logger = LogManager.getLogger(DeckTracker.class.getName());
     ArrayList<DeckTrackerCard> cardList;
+    ArrayList<DeckTrackerCard> discardList;
 
     public DeckTracker() {
         cardList = new ArrayList<DeckTrackerCard>();
+        discardList = new ArrayList<DeckTrackerCard>();
         BaseMod.subscribe(this);
     }
 
@@ -59,25 +60,51 @@ public class DeckTracker implements PostDrawSubscriber, StartGameSubscriber, OnS
 
     @Override
     public void receivePostBattle(AbstractRoom abstractRoom) {
-        ResetList();
+        ResetList(true);
+        ResetList(false);
     }
 
-    private void ResetList() {
-        for (DeckTrackerCard dt : cardList) {
-            dt.Remove();
+    private void ResetList(boolean discardDeck) {
+        if (discardDeck) {
+            for (DeckTrackerCard dt : discardList) {
+                dt.Remove();
+            }
+            discardList.clear();
         }
-        cardList.clear();
+        else {
+            for (DeckTrackerCard dt : cardList) {
+                dt.Remove();
+            }
+            cardList.clear();
+        }
     }
 
     public void Update() {
         try {AbstractDungeon.getCurrRoom();}
         catch (Exception e) { logger.error("You played a card while not in combat?");}
-        ResetList();
+        makeDeckList(false);
+        makeDeckList(true);
+    }
+
+    private void makeDeckList(boolean discardDeck) {
+        TreeMap<AbstractCard, Integer> ret = new TreeMap<>();
+        ResetList(discardDeck);
         Texture COLORLESS_ORB = ImageMaster.loadImage("img/DeckTracker_colorless_orb.png");
         int y = 0;
         TextureRegion TROrb = null;
-        deckList = getDeckList();
-        for (Map.Entry<AbstractCard, Integer> entry : deckList.entrySet()) {
+        y=0;
+        if (discardDeck) {
+            for (AbstractCard card : AbstractDungeon.player.discardPile.group)  {
+                ret.put(card, ret.getOrDefault(card, 0) + 1);
+            }
+        }
+        else {
+            for (AbstractCard card : AbstractDungeon.player.drawPile.group)  {
+                ret.put(card, ret.getOrDefault(card, 0) + 1);
+            }
+        }
+
+        for (Map.Entry<AbstractCard, Integer> entry :ret.entrySet()) {
             int amount = entry.getValue();
             --y;
             AbstractCard card = entry.getKey();
@@ -102,14 +129,16 @@ public class DeckTracker implements PostDrawSubscriber, StartGameSubscriber, OnS
                     TROrb = new TextureRegion(energyOrbAR, 0, 0, energyOrbAR.packedWidth, energyOrbAR.packedHeight);
                     break;
             }
-            DeckTrackerCard dtCard = new DeckTrackerCard(card, TROrb, y, amount);
-            cardList.add(dtCard);
+            DeckTrackerCard dtCard = new DeckTrackerCard(card, TROrb, y, amount, discardDeck);
+            if (discardDeck) discardList.add(dtCard);
+            else cardList.add(dtCard);
         }
     }
 
-    private TreeMap<AbstractCard, Integer> getDeckList() {
+    private TreeMap<AbstractCard, Integer> getDiscardList() {
+
         TreeMap<AbstractCard, Integer> ret = new TreeMap<>();
-        for (AbstractCard card : AbstractDungeon.player.drawPile.group)  {
+        for (AbstractCard card : AbstractDungeon.player.discardPile.group)  {
             ret.put(card, ret.getOrDefault(card, 0) + 1);
         }
         return ret;

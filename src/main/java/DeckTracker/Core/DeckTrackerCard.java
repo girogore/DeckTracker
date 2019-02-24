@@ -24,7 +24,7 @@ public class DeckTrackerCard implements PreRoomRenderSubscriber {
     float OFFSET = (float) Settings.HEIGHT - (160.0F * Settings.scale);
     private static int rowHeight = 30;
     private static int rowWidth = 200;
-    float xloc = 6*Settings.scale;
+    float xloc;
     float width = rowWidth * Settings.scale;
     float height = rowHeight * Settings.scale;
     TextureRegion orbTexture;
@@ -32,15 +32,19 @@ public class DeckTrackerCard implements PreRoomRenderSubscriber {
     String name;
     String description;
     BitmapFont titleFont;
+    boolean discardDeck;
     public static final Logger logger = LogManager.getLogger(DeckTracker.class.getName());
 
-
-
-    public DeckTrackerCard(AbstractCard card, TextureRegion orbTR, int y, int amount) {
+    public DeckTrackerCard(AbstractCard card, TextureRegion orbTR, int y, int amount, boolean discard) {
         this.card = card;
+        this.discardDeck = discard;
         index = (y * rowHeight * 1.1F * Settings.scale) + (OFFSET);
         this.amount = amount;
         orbTexture = orbTR;
+        if (discardDeck)
+            xloc = Settings.WIDTH - (6*Settings.scale+width+height);
+        else
+            xloc = 6 * Settings.scale;
 
         if (card.cost < 0) cost = "-";
         else cost = Integer.toString(card.cost);
@@ -71,13 +75,14 @@ public class DeckTrackerCard implements PreRoomRenderSubscriber {
         }
 
         if (this.hb.hovered) {
-            TipHelper.renderGenericTip(width+ 15.0F, index, this.name, description);
+            if (discardDeck) TipHelper.renderGenericTip(xloc-25.0F, index, this.name, description);
+            else TipHelper.renderGenericTip(width+ 15.0F, index, this.name, description);
         }
 
         sb.setColor(Color.WHITE.cpy());
 
         try {
-            sb.draw(orbTexture, width, index, height, height);
+            sb.draw(orbTexture, xloc+width, index, height, height);
             TextureAtlas.AtlasRegion AR = card.portrait;
             TextureRegion TR = new TextureRegion(AR, 0, (AR.packedHeight / 3), AR.packedWidth, AR.packedHeight / 3);
             sb.draw(TR, xloc, index, width, height);
@@ -87,11 +92,11 @@ public class DeckTrackerCard implements PreRoomRenderSubscriber {
         }
 
         titleFont.getData().setScale(1.0F);
-        FontHelper.renderFont(sb, FontHelper.menuBannerFont, Integer.toString(amount), 5, index+(2.0F * Settings.scale)+(height*0.7F), Color.GOLD);
+        FontHelper.renderFont(sb, FontHelper.menuBannerFont, Integer.toString(amount), xloc-5, index+(2.0F * Settings.scale)+(height*0.7F), Color.GOLD);
         titleFont.getData().setScale(0.7F);
-        FontHelper.renderFont(sb, titleFont, name, 20, index+(height*0.7F), Color.WHITE);
+        FontHelper.renderFont(sb, titleFont, name, xloc+20, index+(height*0.7F), Color.WHITE);
         titleFont.getData().setScale(0.8F);
-        FontHelper.renderFont(sb, titleFont, cost, width+(height*0.35F), index+(height*0.7F), Color.WHITE);
+        FontHelper.renderFont(sb, titleFont, cost, xloc+width+(height*0.35F), index+(height*0.7F), Color.WHITE);
 
     }
 
