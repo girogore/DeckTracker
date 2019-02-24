@@ -92,7 +92,7 @@ public class DeckTrackerCard implements PreRoomRenderSubscriber {
         }
 
         titleFont.getData().setScale(1.0F);
-        FontHelper.renderFont(sb, FontHelper.menuBannerFont, Integer.toString(amount), xloc-5, index+(2.0F * Settings.scale)+(height*0.7F), Color.GOLD);
+        FontHelper.renderFont(sb, FontHelper.menuBannerFont, Integer.toString(amount), xloc, index+(2.0F * Settings.scale)+(height*0.7F), Color.GOLD);
         titleFont.getData().setScale(0.7F);
         FontHelper.renderFont(sb, titleFont, name, xloc+20, index+(height*0.7F), Color.WHITE);
         titleFont.getData().setScale(0.8F);
