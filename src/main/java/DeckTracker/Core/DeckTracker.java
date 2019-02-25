@@ -1,12 +1,12 @@
 package DeckTracker.Core;
 
 import basemod.BaseMod;
-import basemod.abstracts.CustomPlayer;
 import basemod.interfaces.PostDrawSubscriber;
 import basemod.interfaces.StartGameSubscriber;
 import basemod.interfaces.OnStartBattleSubscriber;
 import basemod.interfaces.OnCardUseSubscriber;
 import basemod.interfaces.PostBattleSubscriber;
+import basemod.interfaces.PostDeathSubscriber;
 import com.badlogic.gdx.graphics.g2d.*;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
@@ -18,12 +18,12 @@ import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.badlogic.gdx.graphics.Texture;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 @SpireInitializer
-public class DeckTracker implements PostDrawSubscriber, StartGameSubscriber, OnStartBattleSubscriber, OnCardUseSubscriber, PostBattleSubscriber {
+public class DeckTracker implements PostDrawSubscriber, StartGameSubscriber, OnStartBattleSubscriber,
+        OnCardUseSubscriber, PostBattleSubscriber, PostDeathSubscriber {
     public static final Logger logger = LogManager.getLogger(DeckTracker.class.getName());
     ArrayList<DeckTrackerCard> cardList;
     ArrayList<DeckTrackerCard> discardList;
@@ -64,6 +64,12 @@ public class DeckTracker implements PostDrawSubscriber, StartGameSubscriber, OnS
         ResetList(false);
     }
 
+    @Override
+    public void receivePostDeath() {
+        ResetList(true);
+        ResetList(false);
+    }
+
     private void ResetList(boolean discardDeck) {
         if (discardDeck) {
             for (DeckTrackerCard dt : discardList) {
@@ -81,7 +87,7 @@ public class DeckTracker implements PostDrawSubscriber, StartGameSubscriber, OnS
 
     public void Update() {
         try {AbstractDungeon.getCurrRoom();}
-        catch (Exception e) { logger.error("You played a card while not in combat?");}
+        catch (Exception e) { logger.error("You played a card while not in combat?"); return;}
         makeDeckList(false);
         makeDeckList(true);
     }
@@ -90,6 +96,7 @@ public class DeckTracker implements PostDrawSubscriber, StartGameSubscriber, OnS
         TreeMap<AbstractCard, Integer> ret = new TreeMap<>();
         ResetList(discardDeck);
         Texture COLORLESS_ORB = ImageMaster.loadImage("img/DeckTracker_colorless_orb.png");
+        TextureAtlas.AtlasRegion energyOrbAR = AbstractDungeon.player.getOrb();
         int y = 0;
         TextureRegion TROrb = null;
         y=0;
@@ -103,29 +110,21 @@ public class DeckTracker implements PostDrawSubscriber, StartGameSubscriber, OnS
                 ret.put(card, ret.getOrDefault(card, 0) + 1);
             }
         }
-
+        int cardTypes = -1;
         for (Map.Entry<AbstractCard, Integer> entry :ret.entrySet()) {
+            cardTypes++;
+            if (cardTypes>22) break; // temporary fix so it doesnt go over energy orb and deck
             int amount = entry.getValue();
             --y;
             AbstractCard card = entry.getKey();
 
             // Orbs
             switch (card.color) {
-                case RED:
-                    TROrb = new TextureRegion(ImageMaster.RED_ORB, 0, 0, ImageMaster.RED_ORB.packedWidth, ImageMaster.RED_ORB.packedHeight);
-                    break;
-                case BLUE:
-                    TROrb = new TextureRegion(ImageMaster.BLUE_ORB, 0, 0, ImageMaster.BLUE_ORB.packedWidth, ImageMaster.BLUE_ORB.packedHeight);
-                    break;
-                case GREEN:
-                    TROrb = new TextureRegion(ImageMaster.GREEN_ORB, 0, 0, ImageMaster.GREEN_ORB.packedWidth, ImageMaster.GREEN_ORB.packedHeight);
-                    break;
                 case CURSE:
                 case COLORLESS:
                     TROrb = new TextureRegion(COLORLESS_ORB, 0, 0, COLORLESS_ORB.getWidth(), COLORLESS_ORB.getHeight());
                     break;
                 default:
-                    TextureAtlas.AtlasRegion energyOrbAR = ((CustomPlayer) AbstractDungeon.player).getOrb();
                     TROrb = new TextureRegion(energyOrbAR, 0, 0, energyOrbAR.packedWidth, energyOrbAR.packedHeight);
                     break;
             }
@@ -133,14 +132,5 @@ public class DeckTracker implements PostDrawSubscriber, StartGameSubscriber, OnS
             if (discardDeck) discardList.add(dtCard);
             else cardList.add(dtCard);
         }
-    }
-
-    private TreeMap<AbstractCard, Integer> getDiscardList() {
-
-        TreeMap<AbstractCard, Integer> ret = new TreeMap<>();
-        for (AbstractCard card : AbstractDungeon.player.discardPile.group)  {
-            ret.put(card, ret.getOrDefault(card, 0) + 1);
-        }
-        return ret;
     }
 }

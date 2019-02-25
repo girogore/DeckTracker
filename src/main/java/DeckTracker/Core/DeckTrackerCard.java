@@ -1,7 +1,7 @@
 package DeckTracker.Core;
 
 import basemod.BaseMod;
-import basemod.interfaces.PreRoomRenderSubscriber;
+import basemod.interfaces.RenderSubscriber;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.core.Settings;
+import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.Hitbox;
 import com.megacrit.cardcrawl.helpers.TipHelper;
@@ -16,17 +17,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import basemod.abstracts.DynamicVariable;
 
-public class DeckTrackerCard implements PreRoomRenderSubscriber {
+public class DeckTrackerCard implements RenderSubscriber {
     AbstractCard card;
     Hitbox hb;
     float index;
     int amount;
     float OFFSET = (float) Settings.HEIGHT - (160.0F * Settings.scale);
-    private static int rowHeight = 30;
+    private static int rowHeight = 25;
     private static int rowWidth = 200;
-    float xloc;
-    float width = rowWidth * Settings.scale;
-    float height = rowHeight * Settings.scale;
+    private float xloc,width,height;
     TextureRegion orbTexture;
     String cost;
     String name;
@@ -38,6 +37,11 @@ public class DeckTrackerCard implements PreRoomRenderSubscriber {
     public DeckTrackerCard(AbstractCard card, TextureRegion orbTR, int y, int amount, boolean discard) {
         this.card = card;
         this.discardDeck = discard;
+
+        if (discardDeck) width = (rowWidth/2) * Settings.scale;
+        else width = rowWidth * Settings.scale;
+
+        height = rowHeight * Settings.scale;
         index = (y * rowHeight * 1.1F * Settings.scale) + (OFFSET);
         this.amount = amount;
         orbTexture = orbTR;
@@ -48,8 +52,12 @@ public class DeckTrackerCard implements PreRoomRenderSubscriber {
 
         if (card.cost < 0) cost = "-";
         else cost = Integer.toString(card.cost);
-        name = card.name;
-
+        if (card.name.length() > 10 && discardDeck)
+            name = card.name.substring(0,9);
+        else if (card.name.length() > 20)
+            name = card.name.substring(0,19);
+        else
+            name = card.name;
         titleFont = FontHelper.cardTitleFont_N;
         FontHelper.menuBannerFont.getData().setScale(0.7F);
 
@@ -63,7 +71,14 @@ public class DeckTrackerCard implements PreRoomRenderSubscriber {
     }
 
     @Override
-    public void receivePreRoomRender(SpriteBatch sb) {
+    public void receiveRender(SpriteBatch sb) {
+        try {
+            AbstractDungeon.getCurrRoom();
+        }
+        catch (Exception e) {
+            BaseMod.unsubscribeLater(this);
+            return;
+        }
         this.hb.update();
         if (this.hb.justHovered) {
             try {
@@ -75,8 +90,8 @@ public class DeckTrackerCard implements PreRoomRenderSubscriber {
         }
 
         if (this.hb.hovered) {
-            if (discardDeck) TipHelper.renderGenericTip(xloc-25.0F, index, this.name, description);
-            else TipHelper.renderGenericTip(width+ 15.0F, index, this.name, description);
+            if (discardDeck) TipHelper.renderGenericTip(xloc-200.0F, index, card.name, description);
+            else TipHelper.renderGenericTip(width + 15.0F, index, card.name, description);
         }
 
         sb.setColor(Color.WHITE.cpy());
@@ -93,11 +108,16 @@ public class DeckTrackerCard implements PreRoomRenderSubscriber {
 
         titleFont.getData().setScale(1.0F);
         FontHelper.renderFont(sb, FontHelper.menuBannerFont, Integer.toString(amount), xloc, index+(2.0F * Settings.scale)+(height*0.7F), Color.GOLD);
-        titleFont.getData().setScale(0.7F);
+        if (discardDeck)
+            titleFont.getData().setScale(0.5F);
+        else
+            titleFont.getData().setScale(0.7F);
         FontHelper.renderFont(sb, titleFont, name, xloc+20, index+(height*0.7F), Color.WHITE);
         titleFont.getData().setScale(0.8F);
-        FontHelper.renderFont(sb, titleFont, cost, xloc+width+(height*0.35F), index+(height*0.7F), Color.WHITE);
-
+        if (card.cost == 0) // 0 isnt centered..
+            FontHelper.renderFont(sb, titleFont, cost, (xloc+width+(height*0.35F))-3.0F, index+(height*0.7F), Color.WHITE);
+        else
+            FontHelper.renderFont(sb, titleFont, cost, xloc+width+(height*0.35F), index+(height*0.7F), Color.WHITE);
     }
 
 
