@@ -107,7 +107,7 @@ public class DeckTrackerCard implements RenderSubscriber {
         }
 
         titleFont.getData().setScale(1.0F);
-        FontHelper.renderFont(sb, FontHelper.menuBannerFont, Integer.toString(amount), xloc+2.0F, index+(2.0F * Settings.scale)+(height*0.8F), Color.GOLD);
+        FontHelper.renderFont(sb, FontHelper.menuBannerFont, Integer.toString(amount), xloc+3.0F, index+(2.0F * Settings.scale)+(height*0.8F), Color.GOLD);
         if (discardDeck)
             titleFont.getData().setScale(0.6F);
         else
