@@ -38,7 +38,7 @@ public class DeckTrackerCard implements RenderSubscriber {
         this.card = card;
         this.discardDeck = discard;
 
-        if (discardDeck) width = (rowWidth/2) * Settings.scale;
+        if (discardDeck) width = (rowWidth*0.65F) * Settings.scale;
         else width = rowWidth * Settings.scale;
 
         height = rowHeight * Settings.scale;
@@ -46,16 +46,16 @@ public class DeckTrackerCard implements RenderSubscriber {
         this.amount = amount;
         orbTexture = orbTR;
         if (discardDeck)
-            xloc = Settings.WIDTH - (6*Settings.scale+width+height);
+            xloc = Settings.WIDTH - (width+height);
         else
-            xloc = 6 * Settings.scale;
+            xloc = 0;
 
         if (card.cost < 0) cost = "-";
         else cost = Integer.toString(card.cost);
-        if (card.name.length() > 10 && discardDeck)
-            name = card.name.substring(0,9);
-        else if (card.name.length() > 20)
-            name = card.name.substring(0,19);
+        if (card.name.length() > 13 && discardDeck)
+            name = card.name.substring(0,12);
+        else if (card.name.length() > 17)
+            name = card.name.substring(0,17);
         else
             name = card.name;
         titleFont = FontHelper.cardTitleFont_N;
@@ -90,7 +90,7 @@ public class DeckTrackerCard implements RenderSubscriber {
         }
 
         if (this.hb.hovered) {
-            if (discardDeck) TipHelper.renderGenericTip(xloc-200.0F, index, card.name, description);
+            if (discardDeck) TipHelper.renderGenericTip(xloc-205.0F, index, card.name, description);
             else TipHelper.renderGenericTip(width + 15.0F, index, card.name, description);
         }
 
@@ -107,17 +107,17 @@ public class DeckTrackerCard implements RenderSubscriber {
         }
 
         titleFont.getData().setScale(1.0F);
-        FontHelper.renderFont(sb, FontHelper.menuBannerFont, Integer.toString(amount), xloc, index+(2.0F * Settings.scale)+(height*0.7F), Color.GOLD);
+        FontHelper.renderFont(sb, FontHelper.menuBannerFont, Integer.toString(amount), xloc+2.0F, index+(2.0F * Settings.scale)+(height*0.8F), Color.GOLD);
         if (discardDeck)
-            titleFont.getData().setScale(0.5F);
+            titleFont.getData().setScale(0.6F);
         else
             titleFont.getData().setScale(0.7F);
         FontHelper.renderFont(sb, titleFont, name, xloc+20, index+(height*0.7F), Color.WHITE);
         titleFont.getData().setScale(0.8F);
-        if (card.cost == 0) // 0 isnt centered..
-            FontHelper.renderFont(sb, titleFont, cost, (xloc+width+(height*0.35F))-3.0F, index+(height*0.7F), Color.WHITE);
+        if (card.cost == 1) // 1 is centered weird in this font.
+            FontHelper.renderFont(sb, titleFont, cost, (xloc+width+(height*0.35F)), index+(height*0.65F), Color.WHITE);
         else
-            FontHelper.renderFont(sb, titleFont, cost, xloc+width+(height*0.35F), index+(height*0.7F), Color.WHITE);
+            FontHelper.renderFont(sb, titleFont, cost, xloc+width+(height*0.35F)-2.0F, index+(height*0.7F), Color.WHITE);
     }
 
 
