@@ -3,7 +3,7 @@
   "name": "DeckTracker",
   "author_list": ["Girogore"],
   "description": "Allows viewing of cards in players draw deck",
-  "credits": "t-larson: Original creator of BaseMod",
+  "credits": "bug-sniper: for the displaying the description code",
   "version": "0.1.0",
   "sts_version": "12-20-2018",
   "mts_version": "3.6.0",
