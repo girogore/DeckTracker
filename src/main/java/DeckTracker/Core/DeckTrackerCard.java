@@ -52,7 +52,7 @@ public class DeckTrackerCard implements RenderSubscriber {
 
         if (card.cost < 0) cost = "-";
         else cost = Integer.toString(card.cost);
-        if (card.name.length() > 13 && discardDeck)
+        if (card.name.length() > 12 && discardDeck)
             name = card.name.substring(0,12);
         else if (card.name.length() > 17)
             name = card.name.substring(0,17);
