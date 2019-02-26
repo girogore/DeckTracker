@@ -79,6 +79,8 @@ public class DeckTrackerCard implements RenderSubscriber {
             BaseMod.unsubscribeLater(this);
             return;
         }
+
+        //HoverText
         this.hb.update();
         if (this.hb.justHovered) {
             try {
@@ -90,12 +92,13 @@ public class DeckTrackerCard implements RenderSubscriber {
         }
 
         if (this.hb.hovered) {
-            if (discardDeck) TipHelper.renderGenericTip(xloc-205.0F, index, card.name, description);
+            if (discardDeck) TipHelper.renderGenericTip(xloc - 205.0F, index, card.name, description);
             else TipHelper.renderGenericTip(width + 15.0F, index, card.name, description);
         }
 
-        sb.setColor(Color.WHITE.cpy());
+        sb.setColor(Color.WHITE.cpy()); // updating the sb alpha so it actually draws..
 
+        // Draw the orb/image
         try {
             sb.draw(orbTexture, xloc+width, index, height, height);
             TextureAtlas.AtlasRegion AR = card.portrait;
@@ -106,6 +109,7 @@ public class DeckTrackerCard implements RenderSubscriber {
             logger.error("Decktracker:: card - " + name + " failed to draw.");
         }
 
+        // Draw the text
         titleFont.getData().setScale(1.0F);
         FontHelper.renderFont(sb, FontHelper.menuBannerFont, Integer.toString(amount), xloc+3.0F, index+(2.0F * Settings.scale)+(height*0.8F), Color.GOLD);
         if (discardDeck)
