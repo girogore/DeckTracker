@@ -31,7 +31,6 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
     public DeckTracker() {
         cardList = new ArrayList<DeckTrackerCard>();
         discardList = new ArrayList<DeckTrackerCard>();
-        COLORLESS_ORB = ImageMaster.loadImage("img/DeckTracker_colorless_orb.png");
         BaseMod.subscribe(this);
     }
 
@@ -116,7 +115,7 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
             int amount = entry.getValue();
             --y;
             AbstractCard card = entry.getKey();
-
+            COLORLESS_ORB = ImageMaster.loadImage("img/DeckTracker_colorless_orb.png");
             // Orbs
             switch (card.color) {
                 case CURSE:
