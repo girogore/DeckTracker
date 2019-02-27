@@ -97,13 +97,11 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
         //Swaps between full card view and tooltip
         if (this.hb.hovered) {
             if (InputHelper.justClickedLeft) {
-                logger.info(this.card.name + " start clicked");
                 this.hb.clickStarted = true;
             }
             if (this.hb.clicked) {
                 this.hb.clicked = false;
                 extendedTooltips = !extendedTooltips;
-                logger.info(this.card.name + " clicked");
             }
         }
         else {
@@ -124,7 +122,6 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
         //
         if (this.hb.hovered) {
             float tooltipX;
-            logger.info("Config:: " + DeckTracker.extendedTooltips + "  Current :: " + extendedTooltips);
             if (discardDeck) { tooltipX = xloc - 205.0F; }
             else { tooltipX = width + (height/2) + 15.0F; }
             if (extendedTooltips)

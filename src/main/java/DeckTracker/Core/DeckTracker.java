@@ -145,8 +145,6 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
         }
     }
 
-    public enum TooltipTypes {BothDefaultSimple, BothDefaultExtended, Simple, Extended }
-
     // Config file initialization and screen
     private static SpireConfig makeConfig() {
         Properties defaultProperties = new Properties();
