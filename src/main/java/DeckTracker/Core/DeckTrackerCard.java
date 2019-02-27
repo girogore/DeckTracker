@@ -1,6 +1,7 @@
 package DeckTracker.Core;
 
 import basemod.BaseMod;
+import basemod.interfaces.PreUpdateSubscriber;
 import basemod.interfaces.RenderSubscriber;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -13,14 +14,18 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.Hitbox;
 import com.megacrit.cardcrawl.helpers.TipHelper;
+import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import basemod.abstracts.DynamicVariable;
 
-public class DeckTrackerCard implements RenderSubscriber {
+public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
     AbstractCard card;
     Hitbox hb;
+    boolean extendedTooltips; //Toggles on hitbox click
     float index;
+    float cardSizeWidth,cardSizeHeight;
+
     int amount;
     float OFFSET = (float) Settings.HEIGHT - (160.0F * Settings.scale);
     private static int rowHeight = 25;
@@ -35,7 +40,8 @@ public class DeckTrackerCard implements RenderSubscriber {
     public static final Logger logger = LogManager.getLogger(DeckTracker.class.getName());
 
     public DeckTrackerCard(AbstractCard card, TextureRegion orbTR, int y, int amount, boolean discard) {
-        this.card = card;
+        this.card = card.makeStatEquivalentCopy();
+        this.card.drawScale = 0.7F;
         this.discardDeck = discard;
 
         if (discardDeck) width = (rowWidth*0.65F) * Settings.scale;
@@ -49,8 +55,8 @@ public class DeckTrackerCard implements RenderSubscriber {
             xloc = Settings.WIDTH - (width+height);
         else
             xloc = 0;
-
-        if (card.cost < 0) cost = "-";
+        if (card.cost ==-1) cost = "X";
+        else if (card.cost < 0) cost = "-";
         else cost = Integer.toString(card.cost);
         if (card.name.length() > 12 && discardDeck)
             name = card.name.substring(0,12);
@@ -62,6 +68,11 @@ public class DeckTrackerCard implements RenderSubscriber {
         FontHelper.menuBannerFont.getData().setScale(0.7F);
 
         hb = new Hitbox(xloc, index, width, height);
+
+        extendedTooltips = DeckTracker.extendedTooltips;
+
+        cardSizeWidth = this.card.hb.width/this.card.drawScale;
+        cardSizeHeight = this.card.hb.height/this.card.drawScale;
         BaseMod.subscribe(this);
     }
 
@@ -69,6 +80,37 @@ public class DeckTrackerCard implements RenderSubscriber {
     {
         BaseMod.unsubscribe(this);
     }
+
+
+    @Override
+    public void receivePreUpdate() {
+        // updating the hitbox
+        this.hb.update();
+        if (this.hb.justHovered) {
+            try {
+                UpdateDescription();
+            } catch (Exception e) {
+                description = card.rawDescription;
+            }
+        }
+
+        //Swaps between full card view and tooltip
+        if (this.hb.hovered) {
+            if (InputHelper.justClickedLeft) {
+                logger.info(this.card.name + " start clicked");
+                this.hb.clickStarted = true;
+            }
+            if (this.hb.clicked) {
+                this.hb.clicked = false;
+                extendedTooltips = !extendedTooltips;
+                logger.info(this.card.name + " clicked");
+            }
+        }
+        else {
+            extendedTooltips = DeckTracker.extendedTooltips;
+        }
+    }
+
 
     @Override
     public void receiveRender(SpriteBatch sb) {
@@ -79,25 +121,25 @@ public class DeckTrackerCard implements RenderSubscriber {
             BaseMod.unsubscribeLater(this);
             return;
         }
-
-        //HoverText
-        this.hb.update();
-        if (this.hb.justHovered) {
-            try {
-                UpdateDescription();
-            }
-            catch (Exception e) {
-                description = card.rawDescription;
-            }
-        }
-
+        //
         if (this.hb.hovered) {
-            if (discardDeck) TipHelper.renderGenericTip(xloc - 205.0F, index, card.name, description);
-            else TipHelper.renderGenericTip(width + 15.0F, index, card.name, description);
+            float tooltipX;
+            logger.info("Config:: " + DeckTracker.extendedTooltips + "  Current :: " + extendedTooltips);
+            if (discardDeck) { tooltipX = xloc - 205.0F; }
+            else { tooltipX = width + (height/2) + 15.0F; }
+            if (extendedTooltips)
+            {
+                if (discardDeck) this.card.current_x = xloc-(((this.card.drawScale*cardSizeWidth)/2) + (height/2)); // Half a card size over from start of line
+                else this.card.current_x = tooltipX+((this.card.drawScale*cardSizeWidth)/2); // Half a card size over from the normal tooltip
+                this.card.current_y = index-((this.card.drawScale*cardSizeHeight)/2)+height; // Half a card size up from the BOTTOM of the line.
+                this.card.render(sb);
+            }
+            else {
+                TipHelper.renderGenericTip(tooltipX, index, card.name, description);
+            }
         }
 
         sb.setColor(Color.WHITE.cpy()); // updating the sb alpha so it actually draws..
-
         // Draw the orb/image
         try {
             sb.draw(orbTexture, xloc+width, index, height, height);
@@ -119,7 +161,7 @@ public class DeckTrackerCard implements RenderSubscriber {
         FontHelper.renderFont(sb, titleFont, name, xloc+20, index+(height*0.7F), Color.WHITE);
         titleFont.getData().setScale(0.8F);
         if (card.cost == 1) // 1 is centered weird in this font.
-            FontHelper.renderFont(sb, titleFont, cost, (xloc+width+(height*0.35F)), index+(height*0.65F), Color.WHITE);
+            FontHelper.renderFont(sb, titleFont, cost, (xloc+width+(height*0.35F)), index+(height*0.70F), Color.WHITE);
         else
             FontHelper.renderFont(sb, titleFont, cost, xloc+width+(height*0.35F)-2.0F, index+(height*0.7F), Color.WHITE);
     }
