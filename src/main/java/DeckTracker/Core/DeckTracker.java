@@ -1,8 +1,6 @@
 package DeckTracker.Core;
 
-import basemod.BaseMod;
-import basemod.ModLabeledToggleButton;
-import basemod.ModPanel;
+import basemod.*;
 import basemod.interfaces.StartGameSubscriber;
 import basemod.interfaces.OnStartBattleSubscriber;
 import basemod.interfaces.PostBattleSubscriber;
@@ -36,6 +34,9 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
 
     private static SpireConfig config;
     public static boolean extendedTooltips;
+    public static int drawHeight, discardHeight;
+    public static int drawWidth, discardWidth;
+    public static float drawTextSize, discardTextSize;
 
 
     public DeckTracker() {
@@ -125,7 +126,8 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
         int cardTypes = -1;
         for (Map.Entry<AbstractCard, Integer> entry :ret.entrySet()) {
             cardTypes++;
-            if (cardTypes>20) break; // temporary fix so it doesnt go over energy orb and deck
+            if (cardTypes>470/drawHeight && !discardDeck) break;
+            if (cardTypes>470/discardHeight && discardDeck) break;
             int amount = entry.getValue();
             --y;
             AbstractCard card = entry.getKey();
@@ -150,6 +152,13 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
         Properties defaultProperties = new Properties();
         defaultProperties.setProperty("extended-tooltip",  Boolean.toString(false));
 
+        defaultProperties.setProperty("draw-width",  Integer.toString(200));
+        defaultProperties.setProperty("draw-height", Integer.toString(25));
+        defaultProperties.setProperty("draw-text-size", Float.toString(0.7F));
+        defaultProperties.setProperty("discard-width",  Integer.toString(130));
+        defaultProperties.setProperty("discard-height", Integer.toString(25));
+        defaultProperties.setProperty("discard-text-size", Float.toString(0.6F));
+
         try {
             SpireConfig retConfig = new SpireConfig("StSDeckTracker", "StSDeckTracker-config", defaultProperties);
             return retConfig;
@@ -169,14 +178,81 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
         } catch (IOException var3) {
             var3.printStackTrace();
         }
+    }
 
+    private static int getInt(String key) {
+        return config.getInt(key);
+    }
+    static void setInt(String key, int value) {
+        config.setInt(key, value);
+
+        try {
+            config.save();
+        } catch (IOException var3) {
+            var3.printStackTrace();
+        }
+    }
+
+    private static Float getFloat(String key) {
+        return config.getFloat(key);
+    }
+    static void setFloat(String key, float value) {
+        config.setFloat(key, value);
+
+        try {
+            config.save();
+        } catch (IOException var3) {
+            var3.printStackTrace();
+        }
     }
 
     private static void setProperties() {
         if (config != null) {
-            Boolean tooltip = getBoolean("extended-tooltip");
-            if (tooltip != null) {
-                extendedTooltips = tooltip;
+            Boolean entryB;
+            int entryI;
+            String entryS;
+            float entryF;
+            try {
+                entryB = getBoolean("extended-tooltip");
+                extendedTooltips = entryB;
+            } catch (Exception e) {
+                extendedTooltips = false;
+            }
+            try {
+                entryI = getInt("draw-width");
+                drawWidth = entryI;
+            } catch (Exception e) {
+                drawWidth = 200;
+            }
+            try {
+                entryI = getInt("draw-height");
+                drawHeight = entryI;
+            } catch (Exception e) {
+                drawHeight = 25;
+            }
+            try {
+                entryF = getFloat("draw-text-size");
+                drawTextSize = entryF;
+            } catch (Exception e) {
+                drawTextSize = 0.7F;
+            }
+            try {
+                entryI = getInt("discard-width");
+                discardWidth = entryI;
+            } catch (Exception e) {
+                discardWidth = 130;
+            }
+            try {
+                entryI = getInt("discard-height");
+                discardHeight = entryI;
+            } catch (Exception e) {
+                discardHeight = 25;
+            }
+            try {
+                entryF = getFloat("discard-text-size");
+                discardTextSize = entryF;
+            } catch (Exception e) {
+                discardTextSize = 0.7F;
             }
         }
     }
@@ -184,17 +260,90 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
     @Override
     public void receivePostInitialize() {
         ModPanel settingsPanel = new ModPanel();
-
-        ModLabeledToggleButton extendedTooltip = new ModLabeledToggleButton("Display full cards in tooltips", 350.0F, 700.0F, Settings.CREAM_COLOR, FontHelper.charDescFont, extendedTooltips, settingsPanel, (label) -> {
+        ModLabeledToggleButton configButton;
+        ModSlider configSlider;
+        ModLabel configLabel;
+        float y = 750.0F;
+        float x = 375.0F;
+        configButton = new ModLabeledToggleButton("Display full cards in tooltips.", x, y, Settings.CREAM_COLOR, FontHelper.charDescFont, extendedTooltips, settingsPanel, (label) -> {
         }, (button) -> {
             extendedTooltips = button.enabled;
             setBoolean("extended-tooltip", button.enabled);
         });
-        settingsPanel.addUIElement(extendedTooltip);
+        settingsPanel.addUIElement(configButton);
+
+        // DRAW DECK
+        y -= 100;
+        configLabel = new ModLabel("Draw Deck", x, y, Settings.CREAM_COLOR, settingsPanel, (label) -> {});
+        settingsPanel.addUIElement(configLabel);
+        y -= 40;
+        configLabel = new ModLabel("Width", x+100, y, Settings.CREAM_COLOR, settingsPanel, (label) -> {});
+        settingsPanel.addUIElement(configLabel);
+        configSlider = new ModSlider("", (x*1.5F)+100, y, 250.0F, "", settingsPanel, (slider) -> {
+            final int val = Math.max(1,Math.round(slider.value * slider.multiplier));
+            drawWidth = val;
+            setInt("draw-width", val);
+        } );
+        configSlider.setValue(getInt("draw-width")/configSlider.multiplier);
+        settingsPanel.addUIElement(configSlider);
+        y -= 40;
+        configLabel = new ModLabel("Height", x+100, y, Settings.CREAM_COLOR, settingsPanel, (label) -> {});
+        settingsPanel.addUIElement(configLabel);
+        configSlider = new ModSlider("", (x*1.5F)+100, y, 50.0F, "", settingsPanel, (slider) -> {
+            final int val = Math.max(1,Math.round(slider.value * slider.multiplier));
+            drawHeight = val;
+            setInt("draw-height", val);
+        } );
+        configSlider.setValue(getInt("draw-height")/configSlider.multiplier);
+        settingsPanel.addUIElement(configSlider);
+        y -= 40;
+        configLabel = new ModLabel("Text Size", x+100, y, Settings.CREAM_COLOR, settingsPanel, (label) -> {});
+        settingsPanel.addUIElement(configLabel);
+        configSlider = new ModSlider("", (x*1.5F)+100, y, 10.0F, "", settingsPanel, (slider) -> {
+            final float val = Math.max(0.01F,slider.value);
+            drawTextSize = val;
+            setFloat("draw-text-size", val);
+        } );
+        configSlider.setValue(getFloat("draw-text-size"));
+        settingsPanel.addUIElement(configSlider);
+
+        //DISCARD DECK
+        y -= 60;
+        configLabel = new ModLabel("Discard Deck", x, y, Settings.CREAM_COLOR, settingsPanel, (label) -> {});
+        settingsPanel.addUIElement(configLabel);
+        y -= 40;
+        configLabel = new ModLabel("Width", x+100, y, Settings.CREAM_COLOR, settingsPanel, (label) -> {});
+        settingsPanel.addUIElement(configLabel);
+        configSlider = new ModSlider("", (x*1.5F)+100, y, 250.0F, "", settingsPanel, (slider) -> {
+            final int val = Math.max(1,Math.round(slider.value * slider.multiplier));
+            discardWidth = val;
+            setInt("discard-width", val);
+        } );
+        configSlider.setValue(getInt("discard-width")/configSlider.multiplier);
+        settingsPanel.addUIElement(configSlider);
+        y -= 40;
+        configLabel = new ModLabel("Height", x+100, y, Settings.CREAM_COLOR, settingsPanel, (label) -> {});
+        settingsPanel.addUIElement(configLabel);
+        configSlider = new ModSlider("", (x*1.5F)+100, y, 50.0F, "", settingsPanel, (slider) -> {
+            final int val = Math.max(1,Math.round(slider.value * slider.multiplier));
+            discardHeight = val;
+            setInt("discard-height", val);
+        } );
+        configSlider.setValue(getInt("discard-height")/configSlider.multiplier);
+        settingsPanel.addUIElement(configSlider);
+        y -= 40;
+        configLabel = new ModLabel("Text Size", x+100, y, Settings.CREAM_COLOR, settingsPanel, (label) -> {});
+        settingsPanel.addUIElement(configLabel);
+        configSlider = new ModSlider("", (x*1.5F)+100, y, 10.0F, "", settingsPanel, (slider) -> {
+            final float val = Math.max(0.01F,slider.value);
+            discardTextSize = val;
+            setFloat("discard-text-size", val);
+        } );
+        configSlider.setValue(getFloat("discard-text-size"));
+        settingsPanel.addUIElement(configSlider);
+
 
         Texture badgeTexture = ImageMaster.loadImage("img/Decktracker-ModBadge.png");
         BaseMod.registerModBadge(badgeTexture, "StSDeckTracker", "Girogore", "Provides an in-game deck tracker", settingsPanel);
-
     }
-
 }

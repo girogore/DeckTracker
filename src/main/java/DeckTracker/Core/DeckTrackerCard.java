@@ -28,15 +28,14 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
 
     int amount;
     float OFFSET = (float) Settings.HEIGHT - (160.0F * Settings.scale);
-    private static int rowHeight = 25;
-    private static int rowWidth = 200;
     private float xloc,width,height;
-    TextureRegion orbTexture;
-    String cost;
-    String name;
-    String description;
-    BitmapFont titleFont;
-    boolean discardDeck;
+    private TextureRegion orbTexture;
+    private String cost;
+    private String name;
+    private String description;
+    private BitmapFont titleFont;
+    private boolean discardDeck;
+    private float textSize;
     public static final Logger logger = LogManager.getLogger(DeckTracker.class.getName());
 
     public DeckTrackerCard(AbstractCard card, TextureRegion orbTR, int y, int amount, boolean discard) {
@@ -44,32 +43,38 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
         this.card.drawScale = 0.7F;
         this.discardDeck = discard;
 
-        if (discardDeck) width = (rowWidth*0.65F) * Settings.scale;
-        else width = rowWidth * Settings.scale;
-
-        height = rowHeight * Settings.scale;
-        index = (y * rowHeight * 1.1F * Settings.scale) + (OFFSET);
         this.amount = amount;
         orbTexture = orbTR;
+        if (card.cost ==-1) cost = "X";
+        else if (card.cost < 0) cost = "-";
+        else cost = Integer.toString(card.cost);
+
+        titleFont = FontHelper.cardTitleFont_N;
+
+        extendedTooltips = DeckTracker.extendedTooltips;
+        if (discardDeck){
+            width = DeckTracker.discardWidth * Settings.scale;
+            height = DeckTracker.discardHeight * Settings.scale;
+            textSize = DeckTracker.discardTextSize;
+        }
+        else {
+            width = DeckTracker.drawWidth * Settings.scale;
+            height = DeckTracker.drawHeight * Settings.scale;
+            textSize = DeckTracker.drawTextSize;
+        }
+
+        if (card.name.length() > (int)(width/(textSize*10))/2)
+            name = card.name.substring(0,(int)(width/(textSize*10))/2);
+        else
+            name = card.name;
+
         if (discardDeck)
             xloc = Settings.WIDTH - (width+height);
         else
             xloc = 0;
-        if (card.cost ==-1) cost = "X";
-        else if (card.cost < 0) cost = "-";
-        else cost = Integer.toString(card.cost);
-        if (card.name.length() > 12 && discardDeck)
-            name = card.name.substring(0,12);
-        else if (card.name.length() > 17)
-            name = card.name.substring(0,17);
-        else
-            name = card.name;
-        titleFont = FontHelper.cardTitleFont_N;
-        FontHelper.menuBannerFont.getData().setScale(0.7F);
 
+        index = (y * height * 1.1F) + (OFFSET);
         hb = new Hitbox(xloc, index, width, height);
-
-        extendedTooltips = DeckTracker.extendedTooltips;
 
         cardSizeWidth = this.card.hb.width/this.card.drawScale;
         cardSizeHeight = this.card.hb.height/this.card.drawScale;
@@ -149,16 +154,13 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
         }
 
         // Draw the text
-        titleFont.getData().setScale(1.0F);
-        FontHelper.renderFont(sb, FontHelper.menuBannerFont, Integer.toString(amount), xloc+3.0F, index+(2.0F * Settings.scale)+(height*0.8F), Color.GOLD);
-        if (discardDeck)
-            titleFont.getData().setScale(0.6F);
-        else
-            titleFont.getData().setScale(0.7F);
-        FontHelper.renderFont(sb, titleFont, name, xloc+20, index+(height*0.7F), Color.WHITE);
-        titleFont.getData().setScale(0.8F);
+        titleFont.getData().setScale(textSize + 0.2F);
+        FontHelper.renderFont(sb, titleFont, Integer.toString(amount), xloc+3.0F, index+(height*0.7F), Color.GOLD);
+        titleFont.getData().setScale(textSize);
+        FontHelper.renderFont(sb, titleFont, name, xloc+(30*textSize), index+(height*0.7F), Color.WHITE);
+        titleFont.getData().setScale(textSize + 0.1F);
         if (card.cost == 1) // 1 is centered weird in this font.
-            FontHelper.renderFont(sb, titleFont, cost, (xloc+width+(height*0.35F)), index+(height*0.70F), Color.WHITE);
+            FontHelper.renderFont(sb, titleFont, cost, (xloc+width+(height*0.35F)), index+(height*0.7F), Color.WHITE);
         else
             FontHelper.renderFont(sb, titleFont, cost, xloc+width+(height*0.35F)-2.0F, index+(height*0.7F), Color.WHITE);
     }
