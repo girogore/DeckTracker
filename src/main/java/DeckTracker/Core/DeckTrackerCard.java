@@ -73,8 +73,8 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
         else
             xloc = 0;
 
-        index = (y * height * 1.1F) + (OFFSET);
-        hb = new Hitbox(xloc, index, width, height);
+        index = (y * height * 1.15F) + (OFFSET);
+        hb = new Hitbox(xloc, index-(height*0.25F), width, height);
 
         cardSizeWidth = this.card.hb.width/this.card.drawScale;
         cardSizeHeight = this.card.hb.height/this.card.drawScale;
@@ -155,14 +155,14 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
 
         // Draw the text
         titleFont.getData().setScale(textSize + 0.2F);
-        FontHelper.renderFont(sb, titleFont, Integer.toString(amount), xloc+3.0F, index+(height*0.7F), Color.GOLD);
+        FontHelper.renderFont(sb, titleFont, Integer.toString(amount), xloc+3.0F, index+(height*0.8F), Color.GOLD);
         titleFont.getData().setScale(textSize);
-        FontHelper.renderFont(sb, titleFont, name, xloc+(30*textSize), index+(height*0.7F), Color.WHITE);
+        FontHelper.renderFont(sb, titleFont, name, xloc+(30*textSize), index+(height*0.8F), Color.WHITE);
         titleFont.getData().setScale(textSize + 0.1F);
         if (card.cost == 1) // 1 is centered weird in this font.
-            FontHelper.renderFont(sb, titleFont, cost, (xloc+width+(height*0.35F)), index+(height*0.7F), Color.WHITE);
+            FontHelper.renderFont(sb, titleFont, cost, (xloc+width+(height*0.35F)), index+(height*0.8F), Color.WHITE);
         else
-            FontHelper.renderFont(sb, titleFont, cost, xloc+width+(height*0.35F)-2.0F, index+(height*0.7F), Color.WHITE);
+            FontHelper.renderFont(sb, titleFont, cost, xloc+width+(height*0.35F)-2.0F, index+(height*0.8F), Color.WHITE);
     }
 
 
