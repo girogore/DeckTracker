@@ -1,19 +1,21 @@
 package DeckTracker.Core;
 
-import basemod.*;
-import basemod.interfaces.StartGameSubscriber;
+import basemod.BaseMod;
 import basemod.interfaces.OnStartBattleSubscriber;
 import basemod.interfaces.PostBattleSubscriber;
 import basemod.interfaces.PostDeathSubscriber;
-import com.badlogic.gdx.graphics.g2d.*;
-import com.evacipated.cardcrawl.modthespire.lib.*;
+import basemod.interfaces.StartGameSubscriber;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
+import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
+import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.rooms.AbstractRoom;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.megacrit.cardcrawl.cards.AbstractCard;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -32,7 +34,7 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
     public static int drawWidth, discardWidth;
     public static float drawTextSize, discardTextSize;
     public static float defaultDiscardText, defaultDrawText;
-    private int screenSpace = 500;
+    private static int screenSpace = 500;
 
     public DeckTracker() {
         cardList = new ArrayList<DeckTrackerCard>();
@@ -103,7 +105,7 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
     }
 
     private static void makeDeckList(boolean discardDeck) {
-        TreeMap<AbstractCard, Integer> ret = new TreeMap<>();
+        TreeMap<String, MutablePair<AbstractCard, Integer>> ret = new TreeMap<>();
         ResetList(discardDeck);
         TextureAtlas.AtlasRegion energyOrbAR = AbstractDungeon.player.getOrb();
         int currentHeight;
@@ -120,19 +122,13 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
         int y = 0;
         TextureRegion TROrb = null;
         y = 0;
-        if (discardDeck) {
-            for (AbstractCard card : AbstractDungeon.player.discardPile.group) {
-                ret.put(card, ret.getOrDefault(card, 0) + 1);
-            }
-        } else {
-            for (AbstractCard card : AbstractDungeon.player.drawPile.group) {
-                ret.put(card, ret.getOrDefault(card, 0) + 1);
-            }
-        }
+        if (discardDeck)  ret = GetCards(AbstractDungeon.player.discardPile.group);
+        else  ret = GetCards(AbstractDungeon.player.drawPile.group);
+
         int cardTypes = ret.entrySet().size();
 
         if (dynamicUpdate) {
-            while ((cardTypes > 500 / currentHeight) && currentHeight >= 18) {
+            while ((cardTypes > screenSpace / currentHeight) && currentHeight >= 18) {
                 currentHeight--;
             }
         }
@@ -160,12 +156,12 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
         }
 
         cardTypes = -1;
-        for (Map.Entry<AbstractCard, Integer> entry : ret.entrySet()) {
+        for (Map.Entry<String, MutablePair<AbstractCard, Integer>> entry : ret.entrySet()) {
             cardTypes++;
             if (cardTypes > 500 / currentHeight) break;
-            int amount = entry.getValue();
+            int amount = entry.getValue().getRight();
             --y;
-            AbstractCard card = entry.getKey();
+            AbstractCard card = entry.getValue().getLeft();
             // Orbs
             switch (card.color) {
                 case CURSE:
@@ -180,5 +176,17 @@ public class DeckTracker implements StartGameSubscriber, OnStartBattleSubscriber
             if (discardDeck) discardList.add(dtCard);
             else cardList.add(dtCard);
         }
+    }
+
+    static TreeMap<String, MutablePair<AbstractCard, Integer>> GetCards(ArrayList<AbstractCard> deck) {
+        TreeMap<String, MutablePair<AbstractCard, Integer>> ret = new TreeMap<>();
+        for (AbstractCard card : deck) {
+            String name = card.name;
+            if (ret.containsKey(name))
+                ret.get(name).setRight(ret.get(name).getRight()+1);
+            else
+                ret.put(name, new MutablePair<>(card, 1));
+        }
+        return ret;
     }
 }

@@ -63,10 +63,13 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
             textSize = DeckTracker.drawTextSize;
         }
 
-        if (card.name.length() > (int)(width/(textSize*10))/2)
-            name = card.name.substring(0,(int)(width/(textSize*10))/2);
-        else
-            name = card.name;
+        name = card.name;
+        if (name.length() > (int)(width/(textSize*10))/2) {
+            name = name.substring(0, (int) (width / (textSize * 10)) / 2);
+            if (card.name.endsWith("+") && !name.endsWith("+")) {
+                name = name + "+";
+            }
+        }
 
         if (discardDeck)
             xloc = Settings.WIDTH - (width+height);
@@ -157,7 +160,9 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
         titleFont.getData().setScale(textSize + 0.2F);
         FontHelper.renderFont(sb, titleFont, Integer.toString(amount), xloc+3.0F, index+(height*0.8F), Color.GOLD);
         titleFont.getData().setScale(textSize);
-        FontHelper.renderFont(sb, titleFont, name, xloc+(30*textSize), index+(height*0.8F), Color.WHITE);
+        Color nameColor = Color.WHITE;
+        if (name.endsWith("+")) nameColor = Color.GREEN;
+        FontHelper.renderFont(sb, titleFont, name, xloc+(30*textSize), index+(height*0.8F), nameColor);
         titleFont.getData().setScale(textSize + 0.1F);
         if (card.cost == 1) // 1 is centered weird in this font.
             FontHelper.renderFont(sb, titleFont, cost, (xloc+width+(height*0.35F)), index+(height*0.8F), Color.WHITE);
