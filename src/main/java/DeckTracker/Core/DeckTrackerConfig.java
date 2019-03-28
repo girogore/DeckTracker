@@ -17,8 +17,6 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
     private static SpireConfig config;
 
     public DeckTrackerConfig() {
-        config = makeConfig();
-        setProperties();
         BaseMod.subscribe(this);
     }
 
@@ -35,9 +33,13 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
         defaultProperties.setProperty("draw-width",  Integer.toString(200));
         defaultProperties.setProperty("draw-height", Integer.toString(28));
         defaultProperties.setProperty("draw-text-size", Float.toString(0.7F));
+        defaultProperties.setProperty("draw-x", Float.toString(0));
+        defaultProperties.setProperty("draw-y", Float.toString(Settings.HEIGHT - (140.0F * Settings.scale)));
         defaultProperties.setProperty("discard-width",  Integer.toString(130));
         defaultProperties.setProperty("discard-height", Integer.toString(28));
         defaultProperties.setProperty("discard-text-size", Float.toString(0.6F));
+        defaultProperties.setProperty("discard-x", Float.toString(0));
+        defaultProperties.setProperty("discard-y", Float.toString(Settings.HEIGHT - (140.0F * Settings.scale)));
 
         try {
             SpireConfig retConfig = new SpireConfig("StSDeckTracker", "StSDeckTracker-config", defaultProperties);
@@ -129,6 +131,18 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
                 DeckTracker.defaultDrawText = 0.7F;
             }
             try {
+                entryF = getFloat("draw-x");
+                DeckTracker.xloc = DeckTracker.clamp(entryF, 0, (Settings.WIDTH - ((DeckTracker.drawWidth + DeckTracker.drawHeight*2) * Settings.scale)));
+            } catch (Exception e) {
+                DeckTracker.xloc = 0;
+            }
+            try {
+                entryF = getFloat("draw-y");
+                DeckTracker.yOffset = DeckTracker.clamp(entryF, 200, Settings.HEIGHT - (140.0F * Settings.scale));
+            } catch (Exception e) {
+                DeckTracker.yOffset = Settings.HEIGHT - (140.0F * Settings.scale);
+            }
+            try {
                 entryI = getInt("discard-width");
                 DeckTracker.discardWidth = entryI;
             } catch (Exception e) {
@@ -146,11 +160,26 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
             } catch (Exception e) {
                 DeckTracker.defaultDiscardText = 0.7F;
             }
+            try {
+                entryF = getFloat("discard-x");
+                DeckTracker.xlocDiscard = DeckTracker.clamp(entryF, 0, (Settings.WIDTH - ((DeckTracker.drawWidth + DeckTracker.drawHeight*2) * Settings.scale)));
+            } catch (Exception e) {
+                DeckTracker.xlocDiscard = 0;
+            }
+            try {
+                entryF = getFloat("discard-y");
+                DeckTracker.yOffsetDiscard = DeckTracker.clamp(entryF, 200, Settings.HEIGHT - (140.0F * Settings.scale));
+            } catch (Exception e) {
+                DeckTracker.yOffsetDiscard = Settings.HEIGHT - (140.0F * Settings.scale);
+            }
         }
     }
 
     @Override
     public void receivePostInitialize() {
+        config = makeConfig();
+        setProperties();
+
         ModPanel settingsPanel = new ModPanel();
         ModButton defaultButton;
         ModLabel configLabel;
@@ -163,9 +192,13 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
             DeckTracker.drawWidth = 200;
             DeckTracker.defaultDrawHeight = 28;
             DeckTracker.defaultDrawText = 0.7F;
+            DeckTracker.xloc = 0;
+            DeckTracker.yOffset = Settings.HEIGHT - (140.0F * Settings.scale);
             DeckTracker.defaultDiscardHeight = 28;
             DeckTracker.discardWidth = 130;
             DeckTracker.defaultDiscardText = 0.6F;
+            DeckTracker.xlocDiscard = 0;
+            DeckTracker.yOffsetDiscard = Settings.HEIGHT - (140.0F * Settings.scale);
 
             setBoolean("dynamic-update", false);
             setBoolean("extended-tooltip", true);
@@ -173,9 +206,13 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
             setInt("draw-width", DeckTracker.drawWidth);
             setInt("draw-height", DeckTracker.defaultDrawHeight);
             setFloat("draw-text-size", DeckTracker.defaultDrawText);
+            setFloat("draw-x", DeckTracker.xloc);
+            setFloat("draw-y", DeckTracker.yOffset);
             setInt("discard-height", DeckTracker.defaultDiscardHeight);
             setInt("discard-width", DeckTracker.discardWidth);
             setFloat("discard-text-size", DeckTracker.defaultDiscardText);
+            setFloat("discard-x", DeckTracker.xlocDiscard);
+            setFloat("discard-y", DeckTracker.yOffsetDiscard);
 
             tooltipButton.toggle.enabled = false;
             dynamicButton.toggle.enabled = true;
@@ -188,7 +225,6 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
             distSlider.setValue(getFloat("discard-text-size"));
         });
         settingsPanel.addUIElement(defaultButton);
-
         tooltipButton = new ModLabeledToggleButton("Display full cards in tooltips.", x, y, Settings.CREAM_COLOR, FontHelper.charDescFont, DeckTracker.extendedTooltips, settingsPanel, (label) -> {
         }, (button) -> {
             DeckTracker.extendedTooltips = button.enabled;

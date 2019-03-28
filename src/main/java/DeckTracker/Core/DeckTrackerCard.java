@@ -19,16 +19,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import basemod.abstracts.DynamicVariable;
 
+import java.util.Set;
+
 public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
-    AbstractCard card;
-    Hitbox hb;
+    private AbstractCard card;
+    private Hitbox hb;
     boolean extendedTooltips; //Toggles on hitbox click
-    float index;
+    float yloc;
     float cardSizeWidth,cardSizeHeight;
 
     int amount;
-    float OFFSET = (float) Settings.HEIGHT - (160.0F * Settings.scale);
-    private float xloc,width,height;
+    private float width,height;
+    private float xloc;
     private TextureRegion orbTexture;
     private String cost;
     private String name;
@@ -36,9 +38,12 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
     private BitmapFont titleFont;
     private boolean discardDeck;
     private float textSize;
+
+    private float startLocX, startLocY;
+
     public static final Logger logger = LogManager.getLogger(DeckTracker.class.getName());
 
-    public DeckTrackerCard(AbstractCard card, TextureRegion orbTR, int y, int amount, boolean discard) {
+    public DeckTrackerCard(AbstractCard card, TextureRegion orbTR, float x, float y, int amount, boolean discard) {
         this.card = card.makeStatEquivalentCopy();
         this.card.drawScale = 0.7F;
         this.discardDeck = discard;
@@ -70,14 +75,9 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
                 name = name + "+";
             }
         }
-
-        if (discardDeck)
-            xloc = Settings.WIDTH - (width+height);
-        else
-            xloc = 0;
-
-        index = (y * height * 1.15F) + (OFFSET);
-        hb = new Hitbox(xloc, index-(height*0.25F), width, height);
+        xloc = x;
+        yloc = y;
+        hb = new Hitbox(xloc, yloc-(height*0.25F), width, height);
 
         cardSizeWidth = this.card.hb.width/this.card.drawScale;
         cardSizeHeight = this.card.hb.height/this.card.drawScale;
@@ -102,21 +102,39 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
             }
         }
 
-        //Swaps between full card view and tooltip
         if (this.hb.hovered) {
             if (InputHelper.justClickedLeft) {
+                startLocX = InputHelper.mX;
+                startLocY = InputHelper.mY;
                 this.hb.clickStarted = true;
             }
-            if (this.hb.clicked) {
-                this.hb.clicked = false;
-                extendedTooltips = !extendedTooltips;
-            }
         }
-        else {
-            extendedTooltips = DeckTracker.extendedTooltips;
+        // Hitbox Drag
+        if (this.hb.clickStarted) {
+            float translateX = startLocX - InputHelper.mX;
+            float translateY = startLocY - InputHelper.mY;
+            // Updating location during draw
+            startLocX = InputHelper.mX;
+            startLocY = InputHelper.mY;
+            float newValueX, newValueY;
+            if (discardDeck) {
+                newValueX = DeckTracker.xlocDiscard + translateX;
+                newValueY = DeckTracker.yOffsetDiscard - translateY;
+                newValueX = DeckTracker.clamp(newValueX, 0, (Settings.WIDTH - ((width + height*2) * Settings.scale)));
+                newValueY = DeckTracker.clamp(newValueY, DeckTracker.RELICLINE-(DeckTracker.screenArea*Settings.scale), DeckTracker.RELICLINE);
+                DeckTracker.xlocDiscard = newValueX;
+                DeckTracker.yOffsetDiscard = newValueY;
+            } else {
+                newValueX = xloc - translateX;
+                newValueY = DeckTracker.yOffset - translateY;
+                newValueX = DeckTracker.clamp(newValueX, 0, (Settings.WIDTH - ((width + height*2) * Settings.scale)));
+                newValueY = DeckTracker.clamp(newValueY, DeckTracker.RELICLINE-(DeckTracker.screenArea*Settings.scale), DeckTracker.RELICLINE);
+                DeckTracker.xloc = newValueX;
+                DeckTracker.yOffset = newValueY;
+            }
+            DeckTracker.MoveAll(discardDeck);
         }
     }
-
 
     @Override
     public void receiveRender(SpriteBatch sb) {
@@ -127,30 +145,29 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
             BaseMod.unsubscribeLater(this);
             return;
         }
-        //
-        if (this.hb.hovered) {
+        if (this.hb.hovered && !this.hb.clickStarted) {
             float tooltipX;
-            if (discardDeck) { tooltipX = xloc - 205.0F; }
-            else { tooltipX = width + (height/2) + 15.0F; }
+            if (discardDeck) { tooltipX = xloc - ((190.0F+height+width)*Settings.scale); }
+            else { tooltipX = xloc+width + (height/2) + 15.0F; }
             if (extendedTooltips)
             {
                 if (discardDeck) this.card.current_x = xloc-(((this.card.drawScale*cardSizeWidth)/2) + (height/2)); // Half a card size over from start of line
                 else this.card.current_x = tooltipX+((this.card.drawScale*cardSizeWidth)/2); // Half a card size over from the normal tooltip
-                this.card.current_y = index-((this.card.drawScale*cardSizeHeight)/2)+height; // Half a card size up from the BOTTOM of the line.
+                this.card.current_y = yloc-((this.card.drawScale*cardSizeHeight)/2)+height; // Half a card size up from the BOTTOM of the line.
                 this.card.render(sb);
             }
             else {
-                TipHelper.renderGenericTip(tooltipX, index, card.name, description);
+                TipHelper.renderGenericTip(tooltipX, yloc, card.name, description);
             }
         }
 
         sb.setColor(Color.WHITE.cpy()); // updating the sb alpha so it actually draws..
         // Draw the orb/image
         try {
-            sb.draw(orbTexture, xloc+width, index, height, height);
+            sb.draw(orbTexture, xloc+width, yloc, height, height);
             TextureAtlas.AtlasRegion AR = card.portrait;
             TextureRegion TR = new TextureRegion(AR, 0, (AR.packedHeight / 3), AR.packedWidth, AR.packedHeight / 3);
-            sb.draw(TR, xloc, index, width, height);
+            sb.draw(TR, xloc, yloc, width, height);
         }
         catch (Exception e) {
             logger.error("Decktracker:: card - " + name + " failed to draw.");
@@ -158,18 +175,23 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
 
         // Draw the text
         titleFont.getData().setScale(textSize + 0.2F);
-        FontHelper.renderFont(sb, titleFont, Integer.toString(amount), xloc+3.0F, index+(height*0.8F), Color.GOLD);
+        FontHelper.renderFont(sb, titleFont, Integer.toString(amount), xloc+3.0F, yloc+(height*0.8F), Color.GOLD);
         titleFont.getData().setScale(textSize);
         Color nameColor = Color.WHITE;
         if (name.endsWith("+")) nameColor = Color.GREEN;
-        FontHelper.renderFont(sb, titleFont, name, xloc+(30*textSize), index+(height*0.8F), nameColor);
+        FontHelper.renderFont(sb, titleFont, name, xloc+(30*textSize), yloc+(height*0.8F), nameColor);
         titleFont.getData().setScale(textSize + 0.1F);
         if (card.cost == 1) // 1 is centered weird in this font.
-            FontHelper.renderFont(sb, titleFont, cost, (xloc+width+(height*0.35F)), index+(height*0.8F), Color.WHITE);
+            FontHelper.renderFont(sb, titleFont, cost, (xloc+width+(height*0.35F)), yloc+(height*0.8F), Color.WHITE);
         else
-            FontHelper.renderFont(sb, titleFont, cost, xloc+width+(height*0.35F)-2.0F, index+(height*0.8F), Color.WHITE);
+            FontHelper.renderFont(sb, titleFont, cost, xloc+width+(height*0.35F)-2.0F, yloc+(height*0.8F), Color.WHITE);
     }
 
+    public void Move(float newX, float newY) {
+        xloc = newX;
+        yloc = newY;
+        this.hb.translate(newX, newY-(height*0.25F));
+    }
 
     //https://github.com/bug-sniper/card-channeler-mod/blob/master/src/main/java/cardchanneler/orbs/ChanneledCard.java
     //Author::bug-sniper
@@ -273,4 +295,6 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
             }
         }
     }
+
+
 }
