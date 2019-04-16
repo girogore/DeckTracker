@@ -37,6 +37,8 @@ public class DeckTracker implements PostInitializeSubscriber, OnStartBattleSubsc
     public static float yOffset, yOffsetDiscard;
     public static final float screenArea = 650.0F;
 
+    public static float previousxloc, previousyOffset, previousxlocDiscard, previousyOffsetDiscard;
+
     public DeckTracker() {
         drawList = new ArrayList<DeckTrackerCard>();
         discardList = new ArrayList<DeckTrackerCard>();
@@ -66,10 +68,22 @@ public class DeckTracker implements PostInitializeSubscriber, OnStartBattleSubsc
     @Override
     public void receiveOnBattleStart(AbstractRoom abstractRoom) {
         Update();
-        DeckTrackerConfig.setFloat("draw-x", xloc);
-        DeckTrackerConfig.setFloat("draw-y", yOffset);
-        DeckTrackerConfig.setFloat("discard-x", xlocDiscard);
-        DeckTrackerConfig.setFloat("discard-y", yOffsetDiscard);
+        if (xloc != previousxloc) {
+            DeckTrackerConfig.setFloat("draw-x", xloc);
+            previousxloc = xloc;
+        }
+        if (yOffset != previousyOffset) {
+            DeckTrackerConfig.setFloat("draw-y", yOffset);
+            previousyOffset = yOffset;
+        }
+        if (xlocDiscard != previousxlocDiscard) {
+            DeckTrackerConfig.setFloat("discard-x", xlocDiscard);
+            previousxlocDiscard = xlocDiscard;
+        }
+        if (yOffsetDiscard != previousyOffsetDiscard) {
+            DeckTrackerConfig.setFloat("discard-y", yOffsetDiscard);
+            previousyOffsetDiscard = yOffsetDiscard;
+        }
     }
 
     @Override

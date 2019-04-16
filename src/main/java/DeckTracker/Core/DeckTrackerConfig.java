@@ -133,12 +133,14 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
             try {
                 entryF = getFloat("draw-x");
                 DeckTracker.xloc = DeckTracker.clamp(entryF, 0, (Settings.WIDTH - ((DeckTracker.drawWidth + DeckTracker.drawHeight*2) * Settings.scale)));
+                DeckTracker.previousxloc  =DeckTracker.xloc;
             } catch (Exception e) {
                 DeckTracker.xloc = 0;
             }
             try {
                 entryF = getFloat("draw-y");
                 DeckTracker.yOffset = DeckTracker.clamp(entryF, 200, Settings.HEIGHT - (140.0F * Settings.scale));
+                DeckTracker.previousyOffset = DeckTracker.yOffset;
             } catch (Exception e) {
                 DeckTracker.yOffset = Settings.HEIGHT - (140.0F * Settings.scale);
             }
@@ -163,12 +165,14 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
             try {
                 entryF = getFloat("discard-x");
                 DeckTracker.xlocDiscard = DeckTracker.clamp(entryF, 0, (Settings.WIDTH - ((DeckTracker.drawWidth + DeckTracker.drawHeight*2) * Settings.scale)));
+                DeckTracker.previousxlocDiscard = DeckTracker.xlocDiscard;
             } catch (Exception e) {
                 DeckTracker.xlocDiscard = 0;
             }
             try {
                 entryF = getFloat("discard-y");
                 DeckTracker.yOffsetDiscard = DeckTracker.clamp(entryF, 200, Settings.HEIGHT - (140.0F * Settings.scale));
+                DeckTracker.previousyOffsetDiscard = DeckTracker.yOffsetDiscard;
             } catch (Exception e) {
                 DeckTracker.yOffsetDiscard = Settings.HEIGHT - (140.0F * Settings.scale);
             }
