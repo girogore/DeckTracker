@@ -4,8 +4,8 @@ import basemod.BaseMod;
 import basemod.interfaces.*;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
-import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
+import com.evacipated.cardcrawl.modthespire.lib.*;
+import com.megacrit.cardcrawl.actions.GameActionManager;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.core.Settings;
@@ -56,6 +56,20 @@ public class DeckTracker implements PostInitializeSubscriber, OnStartBattleSubsc
     )
     public static class PostCardResolve {
         public static void Postfix(AbstractPlayer __instance) {
+            Update();
+        }
+    }
+
+    @SpirePatch(
+            clz = GameActionManager.class,
+            method = "update"
+    )
+    public static class PostActionResolve {
+        @SpireInsertPatch(
+                rloc=9,
+                localvars={}
+        )
+        public static void Insert(GameActionManager __instance) {
             Update();
         }
     }
