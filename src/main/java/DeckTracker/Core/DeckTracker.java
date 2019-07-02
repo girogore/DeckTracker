@@ -192,7 +192,7 @@ public class DeckTracker implements PostInitializeSubscriber, OnStartBattleSubsc
             switch (card.color) {
                 case CURSE:
                 case COLORLESS:
-                    TROrb = new TextureRegion(ImageMaster.CARD_GRAY_ORB_L, 0, 0, ImageMaster.CARD_GRAY_ORB_L.getWidth(), ImageMaster.CARD_GRAY_ORB_L.getHeight());
+                    TROrb = new TextureRegion(ImageMaster.CARD_GRAY_ORB_L, 0, 0, ImageMaster.CARD_GRAY_ORB_L.packedWidth, ImageMaster.CARD_GRAY_ORB_L.packedHeight);
                     break;
                 default:
                     TROrb = new TextureRegion(energyOrbAR, 0, 0, energyOrbAR.packedWidth, energyOrbAR.packedHeight);

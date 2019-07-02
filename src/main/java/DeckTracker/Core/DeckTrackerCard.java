@@ -54,7 +54,7 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
         else if (card.cost < 0) cost = "-";
         else cost = Integer.toString(card.cost);
 
-        titleFont = FontHelper.cardTitleFont_N;
+        titleFont = FontHelper.cardTitleFont;
 
         extendedTooltips = DeckTracker.extendedTooltips;
         if (discardDeck){
@@ -259,7 +259,7 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
         card.initializeDescription();
         String descriptionFragment = "";
         for (int i=0; i<card.description.size(); i++){
-            descriptionFragment = card.description.get(i).text;
+            descriptionFragment = card.description.get(i).getText();
             for (String word : descriptionFragment.split(" ")) {
                 if (firstWord){
                     firstWord = false;
