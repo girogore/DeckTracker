@@ -39,6 +39,8 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
     private boolean discardDeck;
     private float textSize;
 
+    private boolean canRender = true;
+
     private float startLocX, startLocY;
 
     public static final Logger logger = LogManager.getLogger(DeckTracker.class.getName());
@@ -163,14 +165,17 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
 
         sb.setColor(Color.WHITE.cpy()); // updating the sb alpha so it actually draws..
         // Draw the orb/image
-        try {
-            sb.draw(orbTexture, xloc+width, yloc, height, height);
-            TextureAtlas.AtlasRegion AR = card.portrait;
-            TextureRegion TR = new TextureRegion(AR, 0, (AR.packedHeight / 3), AR.packedWidth, AR.packedHeight / 3);
-            sb.draw(TR, xloc, yloc, width, height);
-        }
-        catch (Exception e) {
-            logger.error("Decktracker:: card - " + name + " failed to draw.");
+
+            try {
+                sb.draw(orbTexture, xloc + width, yloc, height, height);
+                if (canRender) {
+                    TextureAtlas.AtlasRegion AR = card.portrait;
+                    TextureRegion TR = new TextureRegion(AR, 0, (AR.packedHeight / 3), AR.packedWidth, AR.packedHeight / 3);
+                    sb.draw(TR, xloc, yloc, width, height);
+                }
+            } catch (Exception e) {
+                //logger.error("Decktracker:: card - " + name + " failed to draw.");
+                canRender = false;
         }
 
         // Draw the text
