@@ -13,6 +13,7 @@ import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.Hitbox;
+import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.helpers.TipHelper;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +41,7 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
     private float textSize;
 
     private boolean canRender = true;
+    private TextureRegion portrait;
 
     private float startLocX, startLocY;
 
@@ -83,6 +85,13 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
 
         cardSizeWidth = this.card.hb.width/this.card.drawScale;
         cardSizeHeight = this.card.hb.height/this.card.drawScale;
+
+        try {
+            TextureAtlas.AtlasRegion AR = card.portrait;
+            portrait = new TextureRegion(AR, 0, (AR.packedHeight / 3), AR.packedWidth, AR.packedHeight / 3);
+        } catch (Exception e){
+            portrait = new TextureRegion(ImageMaster.CARD_LOCKED_ATTACK);
+        }
         BaseMod.subscribe(this);
     }
 
@@ -168,13 +177,8 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
 
             try {
                 sb.draw(orbTexture, xloc + width, yloc, height, height);
-                if (canRender) {
-                    TextureAtlas.AtlasRegion AR = card.portrait;
-                    TextureRegion TR = new TextureRegion(AR, 0, (AR.packedHeight / 3), AR.packedWidth, AR.packedHeight / 3);
-                    sb.draw(TR, xloc, yloc, width, height);
-                }
+                sb.draw(portrait, xloc, yloc, width, height);
             } catch (Exception e) {
-                //logger.error("Decktracker:: card - " + name + " failed to draw.");
                 canRender = false;
         }
 
