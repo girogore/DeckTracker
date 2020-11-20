@@ -175,16 +175,16 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
         sb.setColor(Color.WHITE.cpy()); // updating the sb alpha so it actually draws..
         // Draw the orb/image
 
-            try {
-                sb.draw(orbTexture, xloc + width, yloc, height, height);
-                sb.draw(portrait, xloc, yloc, width, height);
-            } catch (Exception e) {
-                canRender = false;
+        try {
+            sb.draw(orbTexture, xloc + width, yloc, height, height);
+            sb.draw(portrait, xloc, yloc, width, height);
+        } catch (Exception e) {
+            canRender = false;
         }
 
         // Draw the text
         titleFont.getData().setScale(textSize + 0.2F);
-        FontHelper.renderFont(sb, titleFont, Integer.toString(amount), xloc+3.0F, yloc+(height*0.8F), Color.GOLD);
+        if (amount != -1) FontHelper.renderFont(sb, titleFont, Integer.toString(amount), xloc+3.0F, yloc+(height*0.8F), Color.GOLD);
         titleFont.getData().setScale(textSize);
         Color nameColor = Color.WHITE;
         if (name.endsWith("+")) nameColor = Color.GREEN;

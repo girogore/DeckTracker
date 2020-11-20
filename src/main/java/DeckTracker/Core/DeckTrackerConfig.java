@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 public class DeckTrackerConfig implements PostInitializeSubscriber {
-    private ModLabeledToggleButton tooltipButton, dynamicButton, dynamicTextButton;
+    private ModLabeledToggleButton tooltipButton, dynamicButton, dynamicTextButton, frozenEyeButton;
     private ModSlider dhSlider, dwSlider, dtSlider, dishSlider, distSlider, diswSlider;
     private static SpireConfig config;
 
@@ -29,6 +29,7 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
         defaultProperties.setProperty("extended-tooltip",  Boolean.toString(false));
         defaultProperties.setProperty("dynamic-update",  Boolean.toString(true));
         defaultProperties.setProperty("dynamic-text",  Boolean.toString(true));
+        defaultProperties.setProperty("frozen-eye",  Boolean.toString(true));
 
         defaultProperties.setProperty("draw-width",  Integer.toString(200));
         defaultProperties.setProperty("draw-height", Integer.toString(28));
@@ -113,6 +114,12 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
                 DeckTracker.dynamicText = true;
             }
             try {
+                entryB = getBoolean("frozen-eye");
+                DeckTracker.frozenEye = entryB;
+            } catch (Exception e) {
+                DeckTracker.frozenEye = true;
+            }
+            try {
                 entryI = getInt("draw-width");
                 DeckTracker.drawWidth = entryI;
             } catch (Exception e) {
@@ -193,6 +200,7 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
             DeckTracker.extendedTooltips = false;
             DeckTracker.dynamicUpdate = true;
             DeckTracker.dynamicText = true;
+            DeckTracker.frozenEye = true;
             DeckTracker.drawWidth = 200;
             DeckTracker.defaultDrawHeight = 28;
             DeckTracker.defaultDrawText = 0.7F;
@@ -207,6 +215,7 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
             setBoolean("dynamic-update", false);
             setBoolean("extended-tooltip", true);
             setBoolean("dynamic-text", true);
+            setBoolean("frozen-eye", true);
             setInt("draw-width", DeckTracker.drawWidth);
             setInt("draw-height", DeckTracker.defaultDrawHeight);
             setFloat("draw-text-size", DeckTracker.defaultDrawText);
@@ -221,6 +230,7 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
             tooltipButton.toggle.enabled = false;
             dynamicButton.toggle.enabled = true;
             dynamicTextButton.toggle.enabled = true;
+            frozenEyeButton.toggle.enabled = true;
             dwSlider.setValue(getInt("draw-width")/dwSlider.multiplier);
             dhSlider.setValue(getInt("draw-height")/dhSlider.multiplier);
             dtSlider.setValue(getFloat("draw-text-size"));
@@ -249,9 +259,15 @@ public class DeckTrackerConfig implements PostInitializeSubscriber {
             setBoolean("dynamic-text", button.enabled);
         });
         settingsPanel.addUIElement(dynamicTextButton);
-
+        y -= 40;
+        frozenEyeButton = new ModLabeledToggleButton("Frozen Eye Support", x, y, Settings.CREAM_COLOR, FontHelper.charDescFont, DeckTracker.frozenEye, settingsPanel, (label) -> {
+        }, (button) -> {
+            DeckTracker.frozenEye = button.enabled;
+            setBoolean("frozen-eye", button.enabled);
+        });
+        settingsPanel.addUIElement(frozenEyeButton);
         // DRAW DECK
-        y -= 100;
+        y -= 60;
         configLabel = new ModLabel("Draw Deck", x, y, Settings.CREAM_COLOR, settingsPanel, (label) -> {});
         settingsPanel.addUIElement(configLabel);
         y -= 40;

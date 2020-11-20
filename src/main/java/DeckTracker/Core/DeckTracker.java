@@ -16,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -27,7 +28,7 @@ public class DeckTracker implements PostInitializeSubscriber, OnStartBattleSubsc
     static ArrayList<DeckTrackerCard> discardList;
 
     public static float RELICLINE;
-    public static boolean extendedTooltips, dynamicUpdate, dynamicText;
+    public static boolean extendedTooltips, dynamicUpdate, dynamicText, frozenEye;
     public static int drawHeight, discardHeight;
     public static int defaultDrawHeight, defaultDiscardHeight;
     public static int drawWidth, discardWidth;
@@ -127,6 +128,7 @@ public class DeckTracker implements PostInitializeSubscriber, OnStartBattleSubsc
     }
 
     public static void Update() {
+
         try {
             AbstractDungeon.getCurrRoom();
         } catch (Exception e) {
@@ -155,10 +157,20 @@ public class DeckTracker implements PostInitializeSubscriber, OnStartBattleSubsc
             currentText = defaultDrawText;
         }
 
-        if (discardDeck)  ret = GetCards(AbstractDungeon.player.discardPile.group);
-        else ret = GetCards(AbstractDungeon.player.drawPile.group);
+        int cardTypes;
+        if (discardDeck)  {
+            ret = GetCards(AbstractDungeon.player.discardPile.group);
+            cardTypes = ret.entrySet().size();
+        }
+        else {
+            cardTypes = AbstractDungeon.player.drawPile.group.size();
+            ret = null;
+            if (!AbstractDungeon.player.hasRelic("Frozen Eye") || !frozenEye) {
+                ret = GetCards(AbstractDungeon.player.drawPile.group);
+                cardTypes = ret.entrySet().size();
+            }
 
-        int cardTypes = ret.entrySet().size();
+        }
 
         if (dynamicUpdate) {
             while ((cardTypes > screenSpace / currentHeight) && currentHeight >= 18) {
@@ -182,36 +194,61 @@ public class DeckTracker implements PostInitializeSubscriber, OnStartBattleSubsc
         cardTypes = -1;
         int y = 0;
         TextureRegion TROrb;
-        for (Map.Entry<String, MutablePair<AbstractCard, Integer>> entry : ret.entrySet()) {
-            cardTypes++;
-            if (cardTypes > screenSpace / currentHeight && cardTypes != 0) break;
-            int amount = entry.getValue().getRight();
-            --y;
-            AbstractCard card = entry.getValue().getLeft();
-            // Orbs
-            switch (card.color) {
-                case CURSE:
-                case COLORLESS:
-                    TROrb = new TextureRegion(ImageMaster.CARD_GRAY_ORB_L, 0, 0, ImageMaster.CARD_GRAY_ORB_L.packedWidth, ImageMaster.CARD_GRAY_ORB_L.packedHeight);
-                    break;
-                default:
-                    TROrb = new TextureRegion(energyOrbAR, 0, 0, energyOrbAR.packedWidth, energyOrbAR.packedHeight);
-                    break;
-            }
-            DeckTrackerCard dtCard;
-            float yloc;
-            if (discardDeck) {
-                yloc = (y * discardHeight * (1.15F* Settings.scale)) + (yOffsetDiscard);
-                float x = (Settings.WIDTH - ((discardWidth+discardHeight) * Settings.scale) - xlocDiscard);
-                dtCard = new DeckTrackerCard(card, TROrb, x, yloc, amount, discardDeck);
-                discardList.add(dtCard);
-            }
-            else {
-                yloc = (y * drawHeight * (1.15F* Settings.scale)) + (yOffset);
-                dtCard = new DeckTrackerCard(card, TROrb, xloc, yloc, amount, discardDeck);
+
+        if ((AbstractDungeon.player.hasRelic("Frozen Eye")) && !discardDeck && frozenEye) {
+            ArrayList<AbstractCard> deck = (ArrayList<AbstractCard>)AbstractDungeon.player.drawPile.group.clone();
+            Collections.reverse(deck);
+            for (AbstractCard card : deck) {
+                cardTypes++;
+                if (cardTypes > screenSpace / currentHeight && cardTypes != 0) break;
+                --y;
+                // Orbs
+                switch (card.color) {
+                    case CURSE:
+                    case COLORLESS:
+                        TROrb = new TextureRegion(ImageMaster.CARD_GRAY_ORB_L, 0, 0, ImageMaster.CARD_GRAY_ORB_L.packedWidth, ImageMaster.CARD_GRAY_ORB_L.packedHeight);
+                        break;
+                    default:
+                        TROrb = new TextureRegion(energyOrbAR, 0, 0, energyOrbAR.packedWidth, energyOrbAR.packedHeight);
+                        break;
+                }
+                DeckTrackerCard dtCard;
+                float yloc;
+                yloc = (y * drawHeight * (1.15F * Settings.scale)) + (yOffset);
+                dtCard = new DeckTrackerCard(card, TROrb, xloc, yloc, -1, discardDeck);
                 drawList.add(dtCard);
             }
-
+        }
+        else {
+            for (Map.Entry<String, MutablePair<AbstractCard, Integer>> entry : ret.entrySet()) {
+                cardTypes++;
+                if (cardTypes > screenSpace / currentHeight && cardTypes != 0) break;
+                int amount = entry.getValue().getRight();
+                --y;
+                AbstractCard card = entry.getValue().getLeft();
+                // Orbs
+                switch (card.color) {
+                    case CURSE:
+                    case COLORLESS:
+                        TROrb = new TextureRegion(ImageMaster.CARD_GRAY_ORB_L, 0, 0, ImageMaster.CARD_GRAY_ORB_L.packedWidth, ImageMaster.CARD_GRAY_ORB_L.packedHeight);
+                        break;
+                    default:
+                        TROrb = new TextureRegion(energyOrbAR, 0, 0, energyOrbAR.packedWidth, energyOrbAR.packedHeight);
+                        break;
+                }
+                DeckTrackerCard dtCard;
+                float yloc;
+                if (discardDeck) {
+                    yloc = (y * discardHeight * (1.15F * Settings.scale)) + (yOffsetDiscard);
+                    float x = (Settings.WIDTH - ((discardWidth + discardHeight) * Settings.scale) - xlocDiscard);
+                    dtCard = new DeckTrackerCard(card, TROrb, x, yloc, amount, discardDeck);
+                    discardList.add(dtCard);
+                } else {
+                    yloc = (y * drawHeight * (1.15F * Settings.scale)) + (yOffset);
+                    dtCard = new DeckTrackerCard(card, TROrb, xloc, yloc, amount, discardDeck);
+                    drawList.add(dtCard);
+                }
+            }
         }
     }
 
@@ -226,6 +263,7 @@ public class DeckTracker implements PostInitializeSubscriber, OnStartBattleSubsc
         }
         return ret;
     }
+
     public static void MoveAll(boolean discard) {
         int y = 0;
         if (discard) {
