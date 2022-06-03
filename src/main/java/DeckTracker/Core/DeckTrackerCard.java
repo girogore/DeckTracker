@@ -16,6 +16,7 @@ import com.megacrit.cardcrawl.helpers.Hitbox;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.helpers.TipHelper;
 import com.megacrit.cardcrawl.helpers.input.InputHelper;
+import com.megacrit.cardcrawl.unlock.UnlockTracker;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import basemod.abstracts.DynamicVariable;
@@ -87,7 +88,7 @@ public class DeckTrackerCard implements RenderSubscriber, PreUpdateSubscriber {
         cardSizeHeight = this.card.hb.height/this.card.drawScale;
 
         try {
-            TextureAtlas.AtlasRegion AR = card.portrait;
+            TextureAtlas.AtlasRegion AR = (UnlockTracker.betaCardPref.getBoolean(card.cardID, false) || Settings.PLAYTESTER_ART_MODE) ? card.jokePortrait : card.portrait;
             portrait = new TextureRegion(AR, 0, (AR.packedHeight / 3), AR.packedWidth, AR.packedHeight / 3);
         } catch (Exception e){
             portrait = new TextureRegion(ImageMaster.CARD_LOCKED_ATTACK);
